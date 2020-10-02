@@ -23,13 +23,17 @@ module ams_spi #(
   output logic [  SS_COUNT-1:0] nSS
 );
 
-`ifdef MODELSIM
   initial 
     begin
+`ifdef MODELSIM
       $display("Clock divider: %f", CLOCK_DIV );
       $display("Result clock: %f", CLOCK_FREQ / ( 2000000.0 * CLOCK_DIV ) );
-    end
 `endif
+    if ( ADDR_WIDTH - ((SS_COUNT > 1) ? $clog2(SS_COUNT) : 1) < 2)
+      $error("No Address space");
+    else
+      $warning("SS width: %d", (SS_COUNT > 1) ? $clog2(SS_COUNT) : 1);
+    end
 
   localparam integer CLOCK_DIV = CLOCK_FREQ / ( 2 * SPI_CLOCK );
 
@@ -311,8 +315,8 @@ module ams_spi #(
                   else if ( ams_read )
                     ams_state <= READ_ST;
                   ams_waitrequest <= 1'b1;
-                  address         <= ams_address[ ADDR_WIDTH - $clog2(SS_COUNT) - 1 : 0 ];
-                  ss_select       <= ams_address[ ADDR_WIDTH - 1 -: $clog2(SS_COUNT) ];
+                  address         <= ams_address[ ADDR_WIDTH - ( (SS_COUNT > 1) ? $clog2(SS_COUNT) : 1 ) - 1 : 0 ];
+                  ss_select       <= ams_address[ ADDR_WIDTH - 1 -: ( (SS_COUNT > 1) ? $clog2(SS_COUNT) : 1 ) ];
                 end
               WRITE_ST :
                 begin
