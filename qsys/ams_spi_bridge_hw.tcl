@@ -31,7 +31,7 @@ set_module_property EDITABLE true
 set_module_property REPORT_TO_TALKBACK false
 set_module_property ALLOW_GREYBOX_GENERATION false
 set_module_property REPORT_HIERARCHY false
-
+set_module_property VALIDATION_CALLBACK validation
 
 # 
 # file sets
@@ -47,12 +47,12 @@ add_fileset_file ams_spi.sdc SDC PATH ../rtl/ams_spi.sdc
 # 
 # parameters
 # 
-add_parameter ADDR_WIDTH INTEGER 32
-set_parameter_property ADDR_WIDTH DEFAULT_VALUE 32
+add_parameter ADDR_WIDTH INTEGER 30
+set_parameter_property ADDR_WIDTH DEFAULT_VALUE 30
 set_parameter_property ADDR_WIDTH DISPLAY_NAME "Разрядность адреса"
 set_parameter_property ADDR_WIDTH TYPE INTEGER
 set_parameter_property ADDR_WIDTH UNITS Bits
-set_parameter_property ADDR_WIDTH ALLOWED_RANGES 0:128
+set_parameter_property ADDR_WIDTH ALLOWED_RANGES 0:30
 set_parameter_property ADDR_WIDTH HDL_PARAMETER true
 add_parameter SS_COUNT INTEGER 2
 set_parameter_property SS_COUNT DEFAULT_VALUE 2
@@ -178,3 +178,12 @@ add_interface_port SPI MOSI mosi Output 1
 add_interface_port SPI SCLK sclk Output 1
 add_interface_port SPI nSS nss Output SS_COUNT
 
+proc validation {} {
+	set clk_div [expr [get_parameter_value CLOCK_FREQ]/[get_parameter_value SPI_CLOCK]]
+	set spi_clk [expr [get_parameter_value CLOCK_FREQ]/(2 * [get_parameter_value SPI_CLOCK])]
+	if {$clk_div < 2} {
+		send_message info "SPI Clock: [expr [get_parameter_value CLOCK_FREQ]/1000000.]MHz"
+	} else {
+		send_message info [format "SPI Clock: %.2fMHz" [expr [get_parameter_value CLOCK_FREQ]/(2000000. * $spi_clk)]]
+	}
+}
